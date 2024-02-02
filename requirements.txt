@@ -216,7 +216,7 @@ tzlocal==5.1
 unstructured==0.10.22
 unstructured-inference==0.7.3
 unstructured.pytesseract==0.3.12
-urllib3==2.0.6
+urllib3==1.26.0
 validators==0.22.0
 watchdog==3.0.0
 wcwidth==0.2.10
