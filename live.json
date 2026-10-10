@@ -2,9 +2,9 @@
  "status": "In the air",
  "actualDepUtc": "2026-10-10T13:27:00Z",
  "estArriveUtc": "2026-10-11T07:34:00Z",
- "lat": 42.9439,
- "lon": -65.8155,
+ "lat": 42.9785,
+ "lon": -65.6797,
  "altitudeFt": 35000,
- "updatedAt": "2026-10-10T14:33:45Z",
- "source": "FlightStats + adsb.lol"
+ "updatedAt": "2026-10-10T14:34:23Z",
+ "source": "FlightStats + FlightAware"
 }
