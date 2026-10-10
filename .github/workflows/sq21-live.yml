@@ -1,0 +1,39 @@
+# Updates live.json on the sq21-live branch with SQ 21's real status and position
+# for the family countdown page (gh-pages: /sq21/). Runs only on 10-11 Oct 2026;
+# the script itself does nothing outside 10:20Z 10 Oct - 13:00Z 11 Oct.
+name: SQ 21 live tracker
+on:
+  schedule:
+    - cron: "*/5 * 10,11 10 *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fetch and print only; save nothing"
+        type: boolean
+        default: true
+      date:
+        description: "Newark departure date (YYYY-MM-DD)"
+        default: "2026-10-10"
+permissions:
+  contents: write
+concurrency:
+  group: sq21-live
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - uses: actions/checkout@v4
+        with:
+          ref: sq21-live
+          path: live
+      - name: Fetch and save live data
+        env:
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+          DEP_DATE: ${{ inputs.date || '2026-10-10' }}
+        run: bash site/sq21/tools/run.sh
