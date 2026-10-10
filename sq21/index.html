@@ -1,0 +1,676 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}</style>
+<title>SQ 21 Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column boarding pass — route header, big countdown, twin city clocks, photo carousel, owner-only settings */
+:root {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --ink: #142231;
+  --muted: #5b6b7a;
+  --line: #cfd8e0;
+  --accent: #d1452b;
+  --accent-soft: #f6ded8;
+  --night: #20324a;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 20px; }
+
+.pass { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.pass-top { padding: 22px 24px 18px; display: grid; gap: 14px; }
+.label { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.route { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.code { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 11vw, 72px); line-height: .9; letter-spacing: .01em; }
+.city { font-size: 13px; color: var(--muted); }
+.arrow { flex: 1; min-width: 60px; height: 2px; background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 14px); position: relative; }
+.arrow::after { content: "✈"; position: absolute; right: -4px; top: -12px; font-size: 18px; color: var(--accent); }
+.headline { font-size: 18px; font-weight: 600; text-wrap: balance; margin: 0; }
+
+.perf { height: 0; border-top: 2px dashed var(--line); margin: 0 14px; position: relative; }
+
+.count { padding: 22px 24px 26px; display: grid; gap: 10px; }
+.digits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.unit { background: var(--night); color: #f3f6f9; border-radius: 10px; padding: 12px 6px 10px; text-align: center; position: relative; }
+.unit::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,.45); }
+.unit b { display: block; font-family: var(--display); font-weight: 800; font-size: clamp(38px, 10vw, 64px); line-height: 1; font-variant-numeric: tabular-nums; }
+.unit span { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+.when { font-size: 14px; color: var(--muted); }
+.when strong { color: var(--ink); font-weight: 600; }
+.status { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); padding: 3px 8px; border-radius: 4px; }
+.src { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.src::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--muted); flex: none; }
+.src.live { color: var(--accent); }
+.src.live::before { background: var(--accent); border-color: var(--accent); }
+
+.clocks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.clock { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; gap: 4px; min-width: 0; }
+.clock .t { font-family: var(--display); font-weight: 600; font-size: clamp(34px, 8vw, 48px); line-height: 1; font-variant-numeric: tabular-nums; }
+.clock .t small { font-size: .45em; margin-left: 4px; color: var(--muted); }
+.clock .d { font-size: 13px; color: var(--muted); }
+.clock .sky { font-size: 12px; font-family: var(--mono); color: var(--muted); }
+.diff { text-align: center; font-size: 13px; color: var(--muted); grid-column: 1 / -1; }
+
+.gallery { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.gal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gal-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.stage { position: relative; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 10px; overflow: hidden; background: var(--night); touch-action: pan-y; }
+.slide { position: absolute; inset: 0; overflow: hidden; transform: translateX(100%); transition: transform .6s ease-in-out; display: grid; place-items: center; }
+.slide.on { transform: translateX(0); }
+.slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.slide .bgblur { position: absolute; inset: -20px; background-size: cover; background-position: center; filter: blur(24px) brightness(.55); }
+.nav { position: absolute; z-index: 2; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(10,17,25,.55); color: #fff; font-size: 20px; cursor: pointer; display: grid; place-items: center; }
+.nav:hover { background: rgba(10,17,25,.8); }
+.prev { left: 10px } .next { right: 10px }
+.del { position: absolute; z-index: 2; top: 10px; right: 10px; border: 0; background: rgba(10,17,25,.6); color: #fff; font-size: 12px; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.dots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; border: 0; padding: 0; background: var(--line); cursor: pointer; }
+.dot.on { background: var(--accent); }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: #c9d4de; padding: 20px; font-size: 14px; }
+
+.btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #fff; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn:disabled { opacity: .55; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+details.settings { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details.settings summary { cursor: pointer; font-weight: 600; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.form label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
+.form .full { grid-column: 1 / -1; }
+.form input, .form select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
+.form .row { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.msg { font-size: 13px; color: var(--muted); }
+
+.flight { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; }
+.fl-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fl-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.links { display: flex; gap: 8px; flex-wrap: wrap; }
+.links a { font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.links a:hover { border-color: var(--accent); color: var(--accent); }
+.mapbox { background: var(--night); border-radius: 10px; overflow: hidden; }
+.mapbox svg { display: block; width: 100%; height: auto; max-height: 380px; }
+.where { font-size: 15px; font-weight: 600; margin: 0; text-wrap: balance; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.stat { display: grid; gap: 2px; min-width: 0; }
+.stat b { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.fine { font-size: 12px; color: var(--muted); margin: 0; }
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.gate-card { width: min(360px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px; text-align: center; }
+.gate-card h1 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; }
+.gate-card p { margin: 0; color: var(--muted); font-size: 14px; }
+.gate-card input { font: 600 28px var(--mono); letter-spacing: .4em; text-align: center; padding: 10px 8px; border: 1px solid var(--line); border-radius: 10px; width: 100%; color: var(--ink); background: var(--bg); }
+.gate-card .err { color: var(--accent); font-size: 13px; min-height: 1.2em; }
+.pending-note { margin: 0; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; color: var(--muted); background: var(--bg); }
+.pending-note strong { color: var(--ink); font-weight: 600; }
+.flight.pending .mapbox, .flight.pending .where, .flight.pending .bar, .flight.pending .stats, .flight.pending #srcFlight { opacity: .4; filter: grayscale(1); pointer-events: none; user-select: none; }
+
+@media (max-width: 520px) {
+  .digits { gap: 6px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .clocks, .form { grid-template-columns: 1fr; }
+  .pass-top, .count { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .slide { transition: none !important; } }
+</style>
+
+</head><body>
+<div class="gate" id="gate" hidden>
+  <form class="gate-card" id="gateForm">
+    <div class="label">Boarding pass · SQ 21</div>
+    <h1>EWR → SIN</h1>
+    <p id="gateMsg">Enter the family access code to see the countdown.</p>
+    <input id="gateCode" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="Access code" placeholder="····">
+    <button class="btn" type="submit">Open</button>
+    <div class="err" id="gateErr" role="alert"></div>
+  </form>
+</div>
+<div class="gate" id="retired" hidden>
+  <div class="gate-card">
+    <div class="label">Boarding pass · SQ 21</div>
+    <h1>Trip complete</h1>
+    <p>SQ 21 has landed in Singapore and this countdown page has been retired. Thank you for following along!</p>
+  </div>
+</div>
+<div class="wrap" id="app" hidden>
+  <section class="pass" aria-label="Trip">
+    <div class="count">
+      <div class="label" id="countLabel">Departure countdown · time to wheels up</div>
+      <div class="digits" role="timer" aria-live="off">
+        <div class="unit"><b id="dd">--</b><span>Days</span></div>
+        <div class="unit"><b id="hh">--</b><span>Hours</span></div>
+        <div class="unit"><b id="mm">--</b><span>Mins</span></div>
+        <div class="unit"><b id="ss">--</b><span>Secs</span></div>
+      </div>
+      <div class="when" id="when">Departure time not set yet.</div>
+      <div class="src" id="srcCount">Schedule estimate</div>
+    </div>
+    <div class="perf" aria-hidden="true"></div>
+    <div class="pass-top">
+      <div class="label">Boarding pass · <span id="tripTitle">Family countdown</span></div>
+      <div class="route">
+        <div><div class="code" id="fromCode">EWR</div><div class="city" id="fromCity">Newark</div></div>
+        <div class="arrow" aria-hidden="true"></div>
+        <div><div class="code" id="toCode">SIN</div><div class="city" id="toCity">Singapore</div></div>
+      </div>
+      <p class="headline" id="headline">Counting down to departure</p>
+    </div>
+  </section>
+
+  <section class="flight" id="flight" aria-label="Flight progress" hidden>
+    <div class="fl-head">
+      <h2 id="flTitle">SQ 21 · where's the plane?</h2>
+      <div class="links">
+        <a id="lnkFa" href="https://www.flightaware.com/live/flight/SIA21" target="_blank" rel="noopener">FlightAware live ↗</a>
+        <a id="lnkFr" href="https://www.flightradar24.com/data/flights/sq21" target="_blank" rel="noopener">Flightradar24 ↗</a>
+      </div>
+    </div>
+    <p class="pending-note" id="flPending" hidden></p>
+    <div class="src" id="srcFlight">Schedule estimate</div>
+    <div class="mapbox"><svg id="map" viewBox="0 0 600 380" role="img" aria-label="Polar map of the route with the estimated plane position"></svg></div>
+    <p class="where" id="where">Waiting at the gate.</p>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <div class="stats">
+      <div class="stat"><b id="stPct">0%</b><span>of the way</span></div>
+      <div class="stat"><b id="stLeft">--</b><span>to landing</span></div>
+      <div class="stat"><b id="stKm">--</b><span>km to go</span></div>
+      <div class="stat"><b id="stArr">--</b><span id="stArrL">lands (SG time)</span></div>
+    </div>
+    <p class="fine" id="flNote">Estimated from the schedule along the shortest route over the North Pole. Delays and winds won't show here, so use the live tracker links for the real position.</p>
+  </section>
+
+  <section class="clocks" aria-label="Local times">
+    <div class="clock">
+      <div class="label">New York · ET</div>
+      <div class="t" id="nyT">--:--</div>
+      <div class="d" id="nyD"></div>
+      <div class="sky" id="nyS"></div>
+    </div>
+    <div class="clock">
+      <div class="label">Singapore · SGT</div>
+      <div class="t" id="sgT">--:--</div>
+      <div class="d" id="sgD"></div>
+      <div class="sky" id="sgS"></div>
+    </div>
+    <div class="diff" id="diff"></div>
+  </section>
+
+  <section class="gallery" aria-label="Photos">
+    <div class="gal-head">
+      <h2>Photos</h2>
+      <div id="uploadBox" hidden>
+        <input type="file" id="fileIn" accept="image/*" multiple hidden>
+        <button class="btn" id="addBtn" type="button">Add photos</button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="empty" id="empty">No photos yet. They'll rotate here once added.</div>
+      <button class="nav prev" id="prevBtn" type="button" aria-label="Previous photo" hidden>‹</button>
+      <button class="nav next" id="nextBtn" type="button" aria-label="Next photo" hidden>›</button>
+      <button class="del" id="delBtn" type="button" hidden>Remove</button>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="msg" id="galMsg"></div>
+  </section>
+
+  <details class="settings" id="settings" hidden>
+    <summary>Edit trip details</summary>
+    <form class="form" id="tripForm">
+      <label class="full">Headline<input id="fHeadline" maxlength="80" placeholder="Dad flies home!"></label>
+      <label>Flight number<input id="fFlight" maxlength="8" value="SQ 21"></label>
+      <label>That time is in
+        <select id="fTz">
+          <option value="America/New_York">New York time</option>
+          <option value="Asia/Singapore">Singapore time</option>
+        </select>
+      </label>
+      <label>Departure date &amp; time<input type="datetime-local" id="fWhen" required></label>
+      <label>Arrival date &amp; time (same time zone)<input type="datetime-local" id="fArr"></label>
+      <label>From (airport code)<input id="fFrom" maxlength="4" value="EWR"></label>
+      <label>To (airport code)<input id="fTo" maxlength="4" value="SIN"></label>
+      <div class="row"><button class="btn" type="submit" id="saveBtn">Save</button><span class="msg" id="formMsg"></span></div>
+    </form>
+  </details>
+</div>
+
+<script>
+const NY = "America/New_York", SG = "Asia/Singapore";
+const CITY = { JFK: "New York", EWR: "Newark", LGA: "New York", SIN: "Singapore" };
+const $ = id => document.getElementById(id);
+let trip = null, live = null, photos = [], idx = 0, timer = null, db = null;
+
+function parts(date, tz) {
+  const o = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    .formatToParts(date).forEach(p => o[p.type] = p.value);
+  return o;
+}
+function offsetMin(date, tz) {
+  const p = parts(date, tz);
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  return Math.round((asUtc - Math.floor(date.getTime() / 1000) * 1000) / 60000);
+}
+// "2026-12-20T09:30" interpreted as wall time in tz -> Date
+function wallToDate(local, tz) {
+  const [d, t] = local.split("T"); const [y, m, day] = d.split("-").map(Number); const [h, mi] = t.split(":").map(Number);
+  const guess = Date.UTC(y, m - 1, day, h, mi);
+  let ts = guess - offsetMin(new Date(guess), tz) * 60000;
+  ts = guess - offsetMin(new Date(ts), tz) * 60000;
+  return new Date(ts);
+}
+function dateToWall(date, tz) {
+  const p = parts(date, tz);
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+const fmtT = (d, tz) => new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(d);
+const fmtD = (d, tz) => new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(d);
+const fmtFull = (d, tz) => new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d);
+function sky(d, tz) {
+  const h = +parts(d, tz).hour;
+  if (h < 6) return "☾ middle of the night"; if (h < 12) return "☀ morning"; if (h < 18) return "☀ afternoon"; if (h < 22) return "☾ evening"; return "☾ late night";
+}
+const pad = n => String(n).padStart(2, "0");
+
+function renderClock(el, d, tz) {
+  const s = fmtT(d, tz); const [time, ap] = s.split(" ");
+  $(el + "T").innerHTML = ""; $(el + "T").append(time);
+  const sm = document.createElement("small"); sm.textContent = ap; $(el + "T").append(sm);
+  $(el + "D").textContent = fmtD(d, tz);
+  $(el + "S").textContent = sky(d, tz);
+}
+
+// ---------- live data (trip/live, written about hourly by a routine) ----------
+const STALE_MS = 2 * 3600e3;
+const isLanded = L => /^landed/i.test(L.status || "");
+// Live values count only if they're under 2 hours old and belong to this trip.
+// A final "Landed" record stays valid after the updates stop.
+function usableLive(now) {
+  if (!live || !trip || !trip.departUtc) return null;
+  const up = Date.parse(live.updatedAt); if (!up) return null;
+  const dep = Date.parse(trip.departUtc), arr = trip.arriveUtc ? Date.parse(trip.arriveUtc) : dep + 20 * 3600e3;
+  if (up < dep - 24 * 3600e3 || up > arr + 24 * 3600e3 || up > now + 10 * 60e3) return null;
+  if (now - up > STALE_MS && !(isLanded(live) && live.estArriveUtc)) return null;
+  return live;
+}
+function renderSource(L) {
+  ["srcCount", "srcFlight"].forEach(id => {
+    const el = $(id); el.classList.toggle("live", !!L);
+    if (!L) { el.textContent = "Schedule estimate"; el.title = "No live update in the last 2 hours, so times and position come from the schedule."; return; }
+    const up = new Date(L.updatedAt);
+    el.textContent = `Live as of ${fmtT(up, NY)} NY · ${fmtT(up, SG)} SG`;
+    el.title = "Source: " + (L.source || "flight tracker");
+  });
+}
+
+function tick() {
+  const now = new Date();
+  renderClock("ny", now, NY); renderClock("sg", now, SG);
+  const diffH = (offsetMin(now, SG) - offsetMin(now, NY)) / 60;
+  $("diff").textContent = `Singapore is ${diffH} hours ahead of New York right now.`;
+
+  if (!trip || !trip.departUtc) { ["dd","hh","mm","ss"].forEach(i => $(i).textContent = "--"); renderSource(null); return; }
+  const L = usableLive(now);
+  renderSource(L);
+  const dep = new Date(L && L.actualDepUtc || trip.departUtc);
+  const arr = L && L.estArriveUtc ? new Date(L.estArriveUtc) : (trip.arriveUtc ? new Date(trip.arriveUtc) : null);
+  let phase = now < dep ? "before" : (arr && now < arr ? "air" : "done");
+  if (L && isLanded(L)) phase = "done";
+  else if (L && /^in the air/i.test(L.status || "") && phase === "done") phase = "air";
+  const target = phase === "before" ? dep : (phase === "air" ? arr : null);
+  let ms = target ? target - now : 0;
+  const s = Math.max(0, Math.floor(ms / 1000));
+  $("dd").textContent = Math.floor(s / 86400);
+  $("hh").textContent = pad(Math.floor(s / 3600) % 24);
+  $("mm").textContent = pad(Math.floor(s / 60) % 60);
+  $("ss").textContent = pad(s % 60);
+  $("countLabel").textContent = phase === "air" ? "Landing countdown · time to touchdown (estimated)" : (phase === "before" ? "Departure countdown · time to wheels up" : (arr ? "Landed" : "Departed"));
+  $("when").innerHTML = "";
+  const status = L && L.status ? L.status : { air: "In the air", done: arr ? "Landed" : "Departed" }[phase];
+  if (status) { const st = document.createElement("span"); st.className = "status"; st.textContent = status; $("when").append(st, " "); }
+  const ev = phase === "before" || !arr ? dep : arr;
+  const a = document.createElement("strong"); a.textContent = fmtFull(ev, NY) + " NY";
+  const b = document.createElement("strong"); b.textContent = fmtFull(ev, SG) + " SG";
+  $("when").append(ev === dep ? (phase === "before" ? "Departs " : "Departed ") : (phase === "air" ? "Lands " : "Landed "), a, " · ", b);
+  renderFlight(now, dep, arr, L, phase);
+}
+
+// ---------- flight estimate ----------
+const AP = { EWR: [40.6925, -74.1687], JFK: [40.6413, -73.7781], SIN: [1.3644, 103.9915] };
+const RAD = Math.PI / 180;
+const vec = ([la, lo]) => [Math.cos(la * RAD) * Math.cos(lo * RAD), Math.cos(la * RAD) * Math.sin(lo * RAD), Math.sin(la * RAD)];
+function gcPoint(A, B, f) {
+  const a = vec(A), b = vec(B);
+  const d = Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+  if (d < 1e-6) return [A[0], A[1]];
+  const k1 = Math.sin((1 - f) * d) / Math.sin(d), k2 = Math.sin(f * d) / Math.sin(d);
+  const p = a.map((x, i) => k1 * x + k2 * b[i]);
+  return [Math.atan2(p[2], Math.hypot(p[0], p[1])) / RAD, Math.atan2(p[1], p[0]) / RAD];
+}
+const gcKm = (A, B) => { const a = vec(A), b = vec(B); return 6371 * Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])); };
+// Rough place names along the EWR/JFK -> SIN routes (over the pole, or over Europe and Asia when live data shows that).
+function region(lat, lon, f) {
+  if (f <= 0) return "Waiting at the gate";
+  if (lat > 82) return "Crossing near the North Pole";
+  if (lon < -50) return lat < 45 ? "Climbing out of the New York area" : lat < 60 ? "Over Quebec, Canada" : "Over the Canadian Arctic";
+  if (lon < -10) return lat > 60 ? "Over Greenland" : "Over the North Atlantic";
+  if (lon < 40 && lat > 35) return lat > 70 ? "Over the Arctic Ocean" : "Over Europe";
+  if (lat > 51) return lon < 60 ? "Over Russia" : "Over Siberia, Russia";
+  if (lat > 42 && lon > 87) return "Over Mongolia";
+  if (lat > 35 && lon < 87) return "Over Central Asia";
+  if (lat > 21.5 && lon > 97) return "Over China";
+  if (lon < 60 && lat > 12) return "Over the Middle East";
+  if (lon < 80 && lat > 8) return "Over India";
+  if (lon < 97 && lat > 5) return "Over the Bay of Bengal";
+  if (lat > 10) return "Over Southeast Asia";
+  return "Descending toward Singapore";
+}
+const MAP = { cx: 300, cy: 190, k: 1.95, rot: -16 };
+function proj([lat, lon]) {
+  const r = (90 - lat) * MAP.k, t = (lon + MAP.rot) * RAD;
+  return [MAP.cx + r * Math.sin(t), MAP.cy - r * Math.cos(t)];
+}
+let mapKey = "";
+function drawMap(A, B, from, to) {
+  const key = from + to; if (key === mapKey) return; mapKey = key;
+  const ns = "http://www.w3.org/2000/svg", svg = $("map"); svg.innerHTML = "";
+  const el = (n, at, txt) => { const e = document.createElementNS(ns, n); for (const k in at) e.setAttribute(k, at[k]); if (txt) e.textContent = txt; svg.append(e); return e; };
+  [[30, "60°N"], [60, "30°N"], [90, "Equator"]].forEach(([c, l]) => {
+    el("circle", { cx: MAP.cx, cy: MAP.cy, r: c * MAP.k, fill: "none", stroke: "#4a6386", "stroke-width": 1.5, "stroke-dasharray": "3 6" });
+    el("text", { x: MAP.cx + 4, y: MAP.cy - c * MAP.k + 20, fill: "#7f95ad", "font-size": 17, "font-family": "JetBrains Mono, monospace" }, l);
+  });
+  for (let lo = 0; lo < 360; lo += 30) { const [x, y] = proj([0, lo]); el("line", { x1: MAP.cx, y1: MAP.cy, x2: x, y2: y, stroke: "#2c4260", "stroke-width": 1 }); }
+  el("circle", { cx: MAP.cx, cy: MAP.cy, r: 3, fill: "#9fb3c8" });
+  el("text", { x: MAP.cx + 8, y: MAP.cy + 24, fill: "#9fb3c8", "font-size": 16, "font-family": "JetBrains Mono, monospace" }, "N. POLE");
+  const pts = []; for (let i = 0; i <= 120; i++) pts.push(proj(gcPoint(A, B, i / 120)));
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  el("path", { id: "routeLine", d, fill: "none", stroke: "#8ea3ba", "stroke-width": 3, "stroke-dasharray": "6 7" });
+  el("path", { id: "flown", d, fill: "none", stroke: "#f0694d", "stroke-width": 5, "stroke-linecap": "round", pathLength: 1000, "stroke-dasharray": "0 1000" });
+  [[A, from, -1], [B, to, 1]].forEach(([p, code, side]) => {
+    const [x, y] = proj(p);
+    el("circle", { cx: x, cy: y, r: 8, fill: "#f3f6f9" });
+    el("text", { x: x + side * 14, y: y + 9, fill: "#f3f6f9", "font-size": 28, "font-weight": 700, "text-anchor": side < 0 ? "end" : "start", "font-family": "Big Shoulders Display, Arial Narrow, sans-serif" }, code);
+  });
+  // Live mode: route drawn through the last reported position instead of the polar line.
+  el("path", { id: "liveAhead", fill: "none", stroke: "#8ea3ba", "stroke-width": 3, "stroke-dasharray": "6 7" });
+  el("path", { id: "liveFlown", fill: "none", stroke: "#f0694d", "stroke-width": 5, "stroke-linecap": "round" });
+  const g = el("g", { id: "plane" });
+  const halo = document.createElementNS(ns, "circle"); halo.setAttribute("r", 11); halo.setAttribute("fill", "rgba(240,105,77,.25)"); g.append(halo);
+  const body = document.createElementNS(ns, "path"); body.setAttribute("d", "M0 -8 L2 -2 L8 1 L8 3 L2 1.5 L1.5 6 L3.5 8 L-3.5 8 L-1.5 6 L-2 1.5 L-8 3 L-8 1 L-2 -2 Z"); body.setAttribute("fill", "#ffffff"); g.append(body);
+}
+function renderFlight(now, dep, arr, L, phase) {
+  const from = (trip.from || "EWR").toUpperCase(), to = (trip.to || "SIN").toUpperCase();
+  const A = AP[from], B = AP[to];
+  if (!arr || !A || !B) { $("flight").hidden = true; return; }
+  $("flight").hidden = false;
+  // Nothing to track until wheels-up: show the panel greyed out, with the reason.
+  const pending = phase === "before";
+  $("flight").classList.toggle("pending", pending);
+  $("flight").setAttribute("aria-disabled", pending);
+  $("flPending").hidden = !pending;
+  if (pending) {
+    $("flPending").innerHTML = "";
+    const w = document.createElement("strong"); w.textContent = `${fmtFull(dep, NY)} NY · ${fmtFull(dep, SG)} SG`;
+    $("flPending").append("Flight tracking is off until departure, because the plane is still at the gate. It switches on at wheels-up, ", w, ", when the countdown above changes to the landing countdown.");
+  }
+  drawMap(A, B, from, to);
+  const total = gcKm(A, B);
+  let f, pos, ang, livePos = false;
+  if (L && phase === "air" && L.lat != null && L.lon != null) {
+    // Last reported fix, then keep moving toward the destination at the pace that meets the latest arrival estimate.
+    livePos = true;
+    const P = [+L.lat, +L.lon], up = Date.parse(L.updatedAt);
+    const g = arr > up ? Math.min(1, Math.max(0, (now - up) / (arr - up))) : 0;
+    pos = gcPoint(P, B, g);
+    f = Math.min(1, Math.max(0, 1 - gcKm(pos, B) / total));
+    const [x0, y0] = proj(pos), [x2, y2] = proj(gcPoint(pos, B, 0.02));
+    ang = Math.atan2(x2 - x0, -(y2 - y0)) / RAD;
+  } else {
+    f = phase === "done" ? 1 : Math.min(1, Math.max(0, (now - dep) / (arr - dep)));
+    pos = gcPoint(A, B, f);
+    const [x2, y2] = proj(gcPoint(A, B, Math.min(1, f + 0.005))), [x0, y0] = proj(gcPoint(A, B, Math.max(0, f - 0.005)));
+    ang = Math.atan2(x2 - x0, -(y2 - y0)) / RAD;
+  }
+  const [x, y] = proj(pos);
+  $("plane").setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(1.9)`);
+  $("flown").setAttribute("stroke-dasharray", livePos ? "0 1000" : `${(f * 1000).toFixed(1)} 1000`);
+  $("routeLine").setAttribute("opacity", livePos ? .3 : 1);
+  const arc = (P, Q) => { const o = []; for (let i = 0; i <= 60; i++) o.push(proj(gcPoint(P, Q, i / 60))); return o.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" "); };
+  $("liveFlown").setAttribute("d", livePos ? arc(A, pos) : "");
+  $("liveAhead").setAttribute("d", livePos ? arc(pos, B) : "");
+  $("barFill").style.width = (f * 100).toFixed(2) + "%";
+  $("stPct").textContent = Math.floor(f * 100) + "%";
+  const left = Math.max(0, Math.floor((arr - now) / 60000));
+  $("stLeft").textContent = f >= 1 ? "Landed" : `${Math.floor(left / 60)}h ${pad(left % 60)}m`;
+  $("stKm").textContent = Math.round(livePos ? gcKm(pos, B) : total * (1 - f)).toLocaleString("en-US");
+  $("stArr").textContent = fmtT(arr, SG);
+  $("stArrL").textContent = "lands " + new Intl.DateTimeFormat("en-US", { timeZone: SG, weekday: "short", day: "numeric", month: "short" }).format(arr) + " SG";
+  const dur = Math.round((arr - dep) / 60000);
+  const alt = livePos && L.altitudeFt > 1000 ? ` · last reported at ${(Math.round(L.altitudeFt / 100) * 100).toLocaleString("en-US")} ft` : "";
+  $("where").textContent = f >= 1 ? `Landed in ${CITY[to] || to}` :
+    f <= 0 && !livePos ? `Waiting at the gate. Scheduled flight time ${Math.floor(dur / 60)}h ${pad(dur % 60)}m, ${Math.round(total).toLocaleString("en-US")} km.` :
+    `${region(pos[0], pos[1], Math.max(f, 0.001))} · about ${Math.abs(pos[0]).toFixed(0)}°${pos[0] >= 0 ? "N" : "S"}, ${Math.abs(pos[1]).toFixed(0)}°${pos[1] >= 0 ? "E" : "W"}${alt}`;
+  $("flNote").textContent = L
+    ? `Live data from ${L.source || "a flight tracker"}, refreshed about every 5 minutes. Between updates the plane keeps moving toward ${CITY[to] || to} at the pace needed to meet the latest arrival estimate. The solid line joins Newark to the reported position; the dashed line ahead is the shortest way on to Singapore.`
+    : "Estimated from the schedule along the shortest route over the North Pole. Delays and winds won't show here, so use the live tracker links for the real position.";
+}
+
+function renderTrip() {
+  if (!trip) return;
+  const from = (trip.from || "EWR").toUpperCase(), to = (trip.to || "SIN").toUpperCase();
+  $("fromCode").textContent = from; $("toCode").textContent = to;
+  $("fromCity").textContent = CITY[from] || ""; $("toCity").textContent = CITY[to] || "";
+  const fl = (trip.flight || "").trim();
+  $("tripTitle").textContent = fl || "Family countdown";
+  if (fl) {
+    const code = fl.replace(/\s+/g, "").toUpperCase();
+    $("flTitle").textContent = fl.toUpperCase() + " · where's the plane?";
+    $("lnkFa").href = "https://www.flightaware.com/live/flight/" + encodeURIComponent(code.replace(/^SQ/, "SIA"));
+    $("lnkFr").href = "https://www.flightradar24.com/data/flights/" + encodeURIComponent(code.toLowerCase());
+  }
+  $("headline").textContent = trip.headline || "Counting down to departure";
+  tick();
+}
+
+// ---------- carousel ----------
+function renderPhotos() {
+  const stage = $("stage");
+  stage.querySelectorAll(".slide").forEach(n => n.remove());
+  $("dots").innerHTML = "";
+  $("empty").hidden = photos.length > 0;
+  $("prevBtn").hidden = $("nextBtn").hidden = photos.length < 2;
+  if (idx >= photos.length) idx = 0;
+  photos.forEach((p, i) => {
+    const src = p.src;
+    const s = document.createElement("div"); s.className = "slide" + (i === idx ? " on" : "");
+    const bg = document.createElement("div"); bg.className = "bgblur"; bg.style.backgroundImage = `url("${src}")`;
+    const img = document.createElement("img"); img.src = src; img.alt = "Family photo " + (i + 1); img.loading = i === idx ? "eager" : "lazy";
+    s.append(bg, img); stage.insertBefore(s, $("prevBtn"));
+    const d = document.createElement("button"); d.type = "button"; d.className = "dot" + (i === idx ? " on" : "");
+    d.setAttribute("aria-label", "Show photo " + (i + 1)); d.onclick = () => go(i, true, i < idx ? -1 : 1);
+    $("dots").append(d);
+  });
+  $("delBtn").hidden = !canManage || !photos.length;
+  restart();
+}
+// dir 1: new photo slides in from the right and the old one exits left; -1 is the reverse.
+function go(i, user, dir = 1) {
+  if (!photos.length) return;
+  const next = (i + photos.length) % photos.length;
+  const slides = document.querySelectorAll(".slide");
+  if (next !== idx && slides[idx] && slides[next]) {
+    const cur = slides[idx], nx = slides[next];
+    nx.style.transition = "none"; nx.style.transform = `translateX(${dir * 100}%)`;
+    void nx.offsetWidth;
+    nx.style.transition = ""; nx.style.transform = "translateX(0)";
+    cur.style.transform = `translateX(${-dir * 100}%)`;
+    cur.classList.remove("on"); nx.classList.add("on");
+  }
+  idx = next;
+  document.querySelectorAll(".dot").forEach((s, k) => s.classList.toggle("on", k === idx));
+  if (user) restart();
+}
+function restart() {
+  clearInterval(timer);
+  if (photos.length > 1 && !matchMedia("(prefers-reduced-motion: reduce)").matches) timer = setInterval(() => go(idx + 1), 3000);
+}
+$("prevBtn").onclick = () => go(idx - 1, true, -1);
+$("nextBtn").onclick = () => go(idx + 1, true);
+let sx = null;
+$("stage").addEventListener("pointerdown", e => sx = e.clientX);
+$("stage").addEventListener("pointerup", e => { if (sx !== null && Math.abs(e.clientX - sx) > 40) go(idx + (e.clientX < sx ? 1 : -1), true, e.clientX < sx ? 1 : -1); sx = null; });
+document.addEventListener("keydown", e => { if (e.target.closest("input,select")) return; if (e.key === "ArrowLeft") go(idx - 1, true, -1); if (e.key === "ArrowRight") go(idx + 1, true); });
+
+// ---------- shared data ----------
+let canManage = false, assets = null, pendingDelete = false;
+
+// Downscale big phone photos before upload so the carousel loads fast.
+async function shrink(file) {
+  try {
+    const bmp = await createImageBitmap(file);
+    const max = 2000, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    if (k === 1 && file.size < 3e6) return file;
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.86));
+  } catch { return file; }
+}
+
+$("addBtn").onclick = () => $("fileIn").click();
+$("fileIn").onchange = async () => {
+  const files = [...$("fileIn").files]; $("fileIn").value = "";
+  if (!files.length) return;
+  $("addBtn").disabled = true;
+  let done = 0, failed = 0;
+  for (const f of files) {
+    $("galMsg").textContent = `Uploading ${done + failed + 1} of ${files.length}…`;
+    try {
+      const blob = await shrink(f);
+      const r = await assets.upload(blob, blob.type ? undefined : { type: "image/jpeg" });
+      await db.collection("photos").add({ asset: r.id, addedAt: Date.now() });
+      done++;
+    } catch (e) { failed++; console.warn(e); }
+  }
+  $("addBtn").disabled = false;
+  $("galMsg").textContent = failed ? `Added ${done}. ${failed} couldn't be uploaded (use JPG, PNG, WebP or GIF under 20 MB).` : `Added ${done} photo${done === 1 ? "" : "s"}.`;
+};
+
+$("delBtn").onclick = async () => {
+  const p = photos[idx]; if (!p) return;
+  if (!pendingDelete) { pendingDelete = true; $("delBtn").textContent = "Tap again to remove"; setTimeout(() => { pendingDelete = false; $("delBtn").textContent = "Remove"; }, 3000); return; }
+  pendingDelete = false; $("delBtn").textContent = "Remove";
+  try { await db.doc("photos/" + p.id).delete(); await assets.delete(p.asset); $("galMsg").textContent = "Photo removed."; }
+  catch (e) { $("galMsg").textContent = "Couldn't remove that photo. Try again."; }
+};
+
+$("tripForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const when = $("fWhen").value; if (!when) return;
+  const tz = $("fTz").value;
+  const depD = wallToDate(when, tz);
+  const arrV = $("fArr").value, arrD = arrV ? wallToDate(arrV, tz) : null;
+  if (arrD && arrD <= depD) { $("formMsg").textContent = "Arrival has to be after departure. Both times use the time zone you picked."; return; }
+  const data = {
+    headline: $("fHeadline").value.trim(),
+    flight: $("fFlight").value.trim(),
+    departUtc: depD.toISOString(),
+    arriveUtc: arrD ? arrD.toISOString() : null,
+    enteredTz: tz,
+    from: $("fFrom").value.trim().toUpperCase() || "EWR",
+    to: $("fTo").value.trim().toUpperCase() || "SIN",
+  };
+  $("saveBtn").disabled = true;
+  try { await db.doc("trip/info").set(data); $("formMsg").textContent = "Saved. Everyone sees the new time."; }
+  catch (err) { $("formMsg").textContent = "Couldn't save. Check your connection and try again."; }
+  $("saveBtn").disabled = false;
+});
+
+function fillForm() {
+  if (!trip) return;
+  $("fHeadline").value = trip.headline || "";
+  $("fFrom").value = trip.from || "EWR"; $("fTo").value = trip.to || "SIN";
+  $("fFlight").value = trip.flight ?? "SQ 21";
+  const tz = trip.enteredTz || NY; $("fTz").value = tz; $("fTz").dataset.prev = tz;
+  if (trip.departUtc) $("fWhen").value = dateToWall(new Date(trip.departUtc), tz);
+  $("fArr").value = trip.arriveUtc ? dateToWall(new Date(trip.arriveUtc), tz) : "";
+  arrTouched = !!trip.arriveUtc;
+}
+// SQ 21 is scheduled at 19h10m gate to gate; prefill arrival until the user edits it.
+let arrTouched = false;
+$("fArr").addEventListener("input", () => arrTouched = true);
+function autoArr() {
+  if (arrTouched || !$("fWhen").value) return;
+  const tz = $("fTz").value;
+  $("fArr").value = dateToWall(new Date(wallToDate($("fWhen").value, tz).getTime() + (19 * 60 + 10) * 60000), tz);
+}
+$("fWhen").addEventListener("change", autoArr);
+$("fTz").addEventListener("change", () => {
+  // Keep the same moments in time; just re-express them in the newly picked zone.
+  const old = $("fTz").dataset.prev || NY, tz = $("fTz").value;
+  ["fWhen", "fArr"].forEach(id => { if ($(id).value) $(id).value = dateToWall(wallToDate($(id).value, old), tz); });
+  $("fTz").dataset.prev = tz;
+});
+
+tick(); setInterval(tick, 1000);
+
+// ---------- public (GitHub Pages) data ----------
+const TRIP = { headline: "", flight: "SQ 21", departUtc: "2026-10-10T13:25:00.000Z", arriveUtc: "2026-10-11T08:55:00.000Z", enteredTz: "America/New_York", from: "EWR", to: "SIN" };
+const PHOTOS = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => ({ id: "p" + i, src: `photos/nyc-${i}.jpg` }));
+const RETIRE_AT = Date.parse("2026-10-12T00:00:00+08:00"); // midnight 12 Oct, Singapore time
+// A light speed bump for casual visitors, not real security: this is a public page.
+const CODE_HASH = "9d45a4710a9abc4e87cac3a7bc71ca46b79c2cbcce4a01a1f83184f6878744c7";
+const LIVE_API = "https://api.github.com/repos/dknight-sg/LLM/contents/live.json?ref=sq21-live";
+const LIVE_RAW = "https://raw.githubusercontent.com/dknight-sg/LLM/sq21-live/live.json";
+const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+async function sha256(t) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function decodeB64(b64) { return new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0))); }
+// The GitHub API always serves the newest copy (the browser revalidates by ETag, which is free);
+// the raw link is the fallback if the API's hourly limit is reached, and can lag up to 5 minutes.
+async function fetchLive() {
+  try {
+    const r = await fetch(LIVE_API, { cache: "no-cache" });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(r.status);
+    return JSON.parse(decodeB64((await r.json()).content));
+  } catch {
+    const r = await fetch(LIVE_RAW, { cache: "no-cache" });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  }
+}
+async function pollLive() {
+  if (document.hidden) return;
+  try { live = await fetchLive(); tick(); } catch (e) { console.warn("live data unavailable", e); }
+}
+function start() {
+  $("gate").hidden = true; $("app").hidden = false;
+  trip = TRIP; renderTrip();
+  photos = PHOTOS; renderPhotos();
+  pollLive(); setInterval(pollLive, 60000);
+  document.addEventListener("visibilitychange", pollLive);
+}
+function retire() { $("gate").hidden = true; $("app").hidden = true; $("retired").hidden = false; clearInterval(timer); }
+if (Date.now() >= RETIRE_AT) retire();
+else if (store.get("sq21-unlocked") === CODE_HASH) start();
+else { $("gate").hidden = false; $("gateCode").focus(); }
+$("gateForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const h = await sha256($("gateCode").value.trim());
+  if (h === CODE_HASH) { store.set("sq21-unlocked", h); start(); }
+  else { $("gateErr").textContent = "That code isn't right. Try again."; $("gateCode").select(); }
+});
+setInterval(() => { if (Date.now() >= RETIRE_AT) retire(); }, 60000);
+</script>
+
+</body></html>
